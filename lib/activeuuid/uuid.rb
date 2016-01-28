@@ -130,7 +130,7 @@ module ActiveUUID
 
       def instantiate_with_uuid(record, record_models = nil)
         uuid_columns.each do |uuid_column|
-          record[uuid_column] = UUIDTools::UUID.serialize(record[uuid_column]).to_s if record[uuid_column]
+          record[uuid_column] = uuid_serialize(record[uuid_column]) if record[uuid_column]
         end
         instantiate_without_uuid(record)
       end
@@ -141,6 +141,12 @@ module ActiveUUID
     end
 
     def create_uuid
+      uuid = old_create_uuid
+      byebug
+      uuid.to_i
+    end
+
+    def old_create_uuid
       if _natural_key
         # TODO if all the attributes return nil you might want to warn about this
         chained = _natural_key.map { |attribute| self.send(attribute) }.join('-')
@@ -158,7 +164,9 @@ module ActiveUUID
     def generate_uuids_if_needed
       primary_key = self.class.primary_key
       if self.class.columns_hash[primary_key].type == :uuid
-        send("#{primary_key}=", create_uuid) unless send("#{primary_key}?")
+        uuid = create_uuid
+        byebug
+        send("#{primary_key}=", uuid) unless (send("#{primary_key}?") && (send("#{primary_key}") != 0))
       end
     end
 

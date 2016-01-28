@@ -10,7 +10,8 @@ if ActiveRecord::VERSION::MAJOR == 4 and ActiveRecord::VERSION::MINOR == 2
         end
 
         def cast_value(value)
-          UUIDTools::UUID.serialize(value)
+          byebug
+          uuid_serialize(value)
         end
       end
     end
@@ -22,7 +23,8 @@ if ActiveRecord::VERSION::MAJOR == 4 and ActiveRecord::VERSION::MINOR == 2
         module OID # :nodoc:
           class Uuid < Type::Value # :nodoc:
             def type_cast_from_user(value)
-              UUIDTools::UUID.serialize(value) if value
+              byebug
+              uuid_serialize(value) if value
             end
             alias_method :type_cast_from_database, :type_cast_from_user
           end
@@ -49,12 +51,12 @@ module ActiveUUID
 
       included do
         def type_cast_with_uuid(value)
-          return UUIDTools::UUID.serialize(value) if type == :uuid
+          return uuid_serialize(value) if type == :uuid
           type_cast_without_uuid(value)
         end
 
         def type_cast_code_with_uuid(var_name)
-          return "UUIDTools::UUID.serialize(#{var_name})" if type == :uuid
+          return "uuid_serialize(#{var_name})" if type == :uuid
           type_cast_code_without_uuid(var_name)
         end
 
@@ -100,7 +102,7 @@ module ActiveUUID
 
       included do
         def type_cast_with_uuid(value)
-          return UUIDTools::UUID.serialize(value) if type == :uuid
+          return uuid_serialize(value) if type == :uuid
           type_cast_without_uuid(value)
         end
         alias_method_chain :type_cast, :uuid if ActiveRecord::VERSION::MAJOR >= 4
@@ -119,12 +121,14 @@ module ActiveUUID
 
       included do
         def quote_with_visiting(value, column = nil)
-          value = UUIDTools::UUID.serialize(value) if column && column.type == :uuid
+          return uuid_to_binary(value.to_i) if column && column.type == :uuid
           quote_without_visiting(value, column)
         end
 
         def type_cast_with_visiting(value, column = nil)
-          value = UUIDTools::UUID.serialize(value) if column && column.type == :uuid
+          byebug
+          example = type_cast_without_visiting(value, column)
+          return uuid_to_binary(value.to_i) if column && column.type == :uuid
           type_cast_without_visiting(value, column)
         end
 
@@ -143,13 +147,13 @@ module ActiveUUID
 
       included do
         def quote_with_visiting(value, column = nil)
-          value = UUIDTools::UUID.serialize(value) if column && column.type == :uuid
+          value = uuid_serialize(value) if column && column.type == :uuid
           value = value.to_s if value.is_a? UUIDTools::UUID
           quote_without_visiting(value, column)
         end
 
         def type_cast_with_visiting(value, column = nil, *args)
-          value = UUIDTools::UUID.serialize(value) if column && column.type == :uuid
+          value = uuid_serialize(value) if column && column.type == :uuid
           value = value.to_s if value.is_a? UUIDTools::UUID
           type_cast_without_visiting(value, column, *args)
         end
